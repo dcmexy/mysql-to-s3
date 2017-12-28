@@ -1,18 +1,22 @@
 #!/bin/bash
 
 # MySQL info to backup all database granted to this user
-DB_USER='dbuser' # Make sure have privileges with lock tables
+DB_USER='user' # Make sure have privileges with lock tables
 DB_PSWD='password'
 DB_HOST='localhost'
 DB_PORT='3306'
 
 # S3 bucket where the file will be stored, please use trailing slash
-S3_BUCKET="s3://bucketname/db/mysql-$(date +"%d-%m-%Y_%T")/"
-AWS_ACCESS_KEY='accesskeyid'
-AWS_SECRET_KEY='secretkey'
+S3_BUCKET="s3://bucket/db/mysql-$(date +"%d-%m-%Y_%T")/"
+AWS_ACCESS_KEY='access'
+AWS_SECRET_KEY='secret'
+
+# Host for Digital Ocean Spaces
+S3_ENDPOINT="endpoint_server"
+S3_DNS_ENDPOINT="%(bucket)s.endpoint_server"
 
 # Temporary local place for backup
-DUMP_DIR="/home/user/backup/db"
+DUMP_DIR="/backup"
 DUMP_LOC="$DUMP_DIR/mysql-$(date +"%d-%m-%Y_%T")"
 
 # How long the backup in local will be kept
@@ -42,7 +46,7 @@ do
         FILESIZE="$(ls -lah $DUMP_LOC/$DB_NAME-$DATE_BAK.sql.gz | awk '{print $5}')"
 
         echo "Send "$DB_NAME" to Amazon S3..."
-        s3cmd --acl-private --delete-removed --skip-existing --no-preserve --access_key=$AWS_ACCESS_KEY --secret_key=$AWS_SECRET_KEY sync $DUMP_LOC/ $S3_BUCKET
+        s3cmd --acl-private --delete-removed --skip-existing --no-preserve --host=$S3_ENDPOINT --host-bucket=$S3_DNS_ENDPOINT --access_key=$AWS_ACCESS_KEY --secret_key=$AWS_SECRET_KEY sync $DUMP_LOC/ $S3_BUCKET
 
         END_TIME="$(date +"%s")"
         DIFF_TIME=$(( $END_TIME - $START_TIME ))
